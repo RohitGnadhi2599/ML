@@ -1,0 +1,109 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.impute import SimpleImputer
+
+try:
+    diabetes_df = pd.read_csv('diabetes.csv')
+    adult_df = pd.read_csv('adult.csv')
+except FileNotFoundError:
+    print("Error: Please upload 'diabetes.csv' and 'adult.csv' to your Google Colab environment.")
+    exit()
+
+diabetes_df.head(10)
+adult_df.head(10)
+
+diabetes_df.shape
+adult_df.shape
+
+#Handling Missing Values
+diabetes_numeric_cols = diabetes_df.select_dtypes(include=[np.number]).columns
+diabetes_categorical_cols = diabetes_df.select_dtypes(exclude=[np.number]).columns
+
+adult_numeric_cols = adult_df.select_dtypes(include=[np.number]).columns
+adult_categorical_cols = adult_df.select_dtypes(exclude=[np.number]).columns
+
+diabetes_numeric_imputer = SimpleImputer(strategy='mean')
+adult_numeric_imputer = SimpleImputer(strategy='mean')
+diabetes_df[diabetes_numeric_cols] = diabetes_numeric_imputer.fit_transform(diabetes_df[diabetes_numeric_cols])
+adult_df[adult_numeric_cols] = adult_numeric_imputer.fit_transform(adult_df[adult_numeric_cols])
+
+diabetes_categorical_imputer = SimpleImputer(strategy='most_frequent')
+adult_categorical_imputer = SimpleImputer(strategy='most_frequent')
+diabetes_df[diabetes_categorical_cols] = diabetes_categorical_imputer.fit_transform(diabetes_df[diabetes_categorical_cols])
+adult_df[adult_categorical_cols] = adult_categorical_imputer.fit_transform(adult_df[adult_categorical_cols])
+
+print("Missing values in Diabetes dataset after imputation:")
+print(diabetes_df.isnull().sum())
+print("Missing values in Adult Income dataset after imputation:")
+print(adult_df.isnull().sum())
+
+adult_df.replace("?", np.nan, inplace=True)
+print("Missing values in Adult Income dataset after replacing '?':")
+print(adult_df.isnull().sum())
+
+from sklearn.impute import SimpleImputer
+
+# Identify numeric and categorical columns
+adult_numeric_cols = adult_df.select_dtypes(include=[np.number]).columns
+adult_categorical_cols = adult_df.select_dtypes(exclude=[np.number]).columns
+
+# Handle missing values in numeric columns using mean imputation
+adult_numeric_imputer = SimpleImputer(strategy='mean')
+adult_df[adult_numeric_cols] = adult_numeric_imputer.fit_transform(adult_df[adult_numeric_cols])
+
+# Handle missing values in categorical columns using most frequent imputation
+adult_categorical_imputer = SimpleImputer(strategy='most_frequent')
+adult_df[adult_categorical_cols] = adult_categorical_imputer.fit_transform(adult_df[adult_categorical_cols])
+print("Missing values in Adult Income dataset after imputation:")
+print(adult_df.isnull().sum())
+
+from sklearn.preprocessing import LabelEncoder
+label_encoder = LabelEncoder()
+
+# Encode categorical columns in Diabetes dataset
+for col in diabetes_categorical_cols:
+    diabetes_df[col] = label_encoder.fit_transform(diabetes_df[col])
+
+# Encode categorical columns in Adult Income dataset
+for col in adult_categorical_cols:
+    adult_df[col] = label_encoder.fit_transform(adult_df[col])
+print("Encoded columns in Diabetes dataset:")
+print(diabetes_df.head())
+print("Encoded columns in Adult Income dataset:")
+print(adult_df.head())
+
+#Handling outliers
+def remove_outliers(df):
+    Q1 = df.quantile(0.25)
+    Q3 = df.quantile(0.75)
+    IQR = Q3 - Q1
+    df_no_outliers = df[~((df < (Q1 - 1.5 * IQR)) | (df > (Q3 + 1.5 * IQR))).any(axis=1)]
+    return df_no_outliers
+
+diabetes_df_no_outliers = remove_outliers(diabetes_df)
+adult_df_no_outliers = remove_outliers(adult_df)
+print("Diabetes dataset shape after removing outliers:", diabetes_df_no_outliers.shape)
+print("Adult Income dataset shape after removing outliers:", adult_df_no_outliers.shape)
+
+#Min-max scaling
+from sklearn.preprocessing import MinMaxScaler
+min_max_scaler = MinMaxScaler()
+diabetes_scaled_minmax = pd.DataFrame(min_max_scaler.fit_transform(diabetes_df_no_outliers), columns=diabetes_df_no_outliers.columns)
+adult_scaled_minmax = pd.DataFrame(min_max_scaler.fit_transform(adult_df_no_outliers), columns=adult_df_no_outliers.columns)
+print("Diabetes dataset after Min-Max scaling:")
+print(diabetes_scaled_minmax.head())
+print("Adult Income dataset after Min-Max scaling:")
+print(adult_scaled_minmax.head())
+
+# Initialize Standard Scaler
+from sklearn.preprocessing import StandardScaler
+standard_scaler = StandardScaler()
+diabetes_scaled_standard = pd.DataFrame(standard_scaler.fit_transform(diabetes_df_no_outliers), columns=diabetes_df_no_outliers.columns)
+adult_scaled_standard = pd.DataFrame(standard_scaler.fit_transform(adult_df_no_outliers), columns=adult_df_no_outliers.columns)
+print("Diabetes dataset after Standard scaling:")
+print(diabetes_scaled_standard.head())
+print("Adult Income dataset after Standard scaling:")
+print(adult_scaled_standard.head())
+
